@@ -14,6 +14,6 @@ public class Trade {
     private double amount;
     private String eventName;
     private String keyword;
-    boolean delete;
+    private String delete;
 
 }

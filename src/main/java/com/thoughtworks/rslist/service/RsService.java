@@ -55,13 +55,14 @@ public class RsService {
 
   public void buy(Trade trade, int id) {
     RsEventDto rsEvent=rsEventRepository.findByRank(id).get();
+    int rsEventId=rsEvent.getId();
     TradeDto tradeDto=TradeDto.builder().amount(trade.getAmount()).rank(id).rsEvent(rsEvent).build();
     tradeRepository.save(tradeDto);
     if(rsEvent.getPrice()>trade.getAmount()){
-      throw new RuntimeException();
+      throw new RuntimeException("400");
     }
-    if(trade.isDelete()){
-      rsEventRepository.deleteById(rsEvent.getId());
+    if(trade.getDelete()=="Yes"){
+      rsEventRepository.deleteById(rsEventId);
     }else{
       if(trade.getEventName()!=null){
         rsEvent.setEventName(trade.getEventName());

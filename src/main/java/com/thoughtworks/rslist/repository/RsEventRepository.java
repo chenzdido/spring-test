@@ -15,6 +15,8 @@ public interface RsEventRepository extends CrudRepository<RsEventDto, Integer> {
 
   Optional<RsEventDto> findByRank(int rank);
 
+  void deleteByRank(int rank);
+
   @Override
   void deleteById(Integer integer);
 

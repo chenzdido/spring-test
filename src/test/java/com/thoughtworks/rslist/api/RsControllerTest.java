@@ -1,9 +1,11 @@
 package com.thoughtworks.rslist.api;
 
 import com.thoughtworks.rslist.dto.RsEventDto;
+import com.thoughtworks.rslist.dto.TradeDto;
 import com.thoughtworks.rslist.dto.UserDto;
 import com.thoughtworks.rslist.dto.VoteDto;
 import com.thoughtworks.rslist.repository.RsEventRepository;
+import com.thoughtworks.rslist.repository.TradeRepository;
 import com.thoughtworks.rslist.repository.UserRepository;
 import com.thoughtworks.rslist.repository.VoteRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,8 +25,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,6 +36,7 @@ class RsControllerTest {
   @Autowired UserRepository userRepository;
   @Autowired RsEventRepository rsEventRepository;
   @Autowired VoteRepository voteRepository;
+  @Autowired TradeRepository tradeRepository;
   private UserDto userDto;
 
   @BeforeEach
@@ -187,6 +189,22 @@ class RsControllerTest {
   }
 
   @Test
+  public void deleteSuccess() throws Exception{
+    UserDto save = userRepository.save(userDto);
+    RsEventDto rsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).price(100).rank(2).build();
+    rsEventDto = rsEventRepository.save(rsEventDto);
+    RsEventDto newrsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).price(50).rank(5).build();
+    newrsEventDto = rsEventRepository.save(newrsEventDto);
+    mockMvc
+            .perform(
+                    delete("/rs/delete/{id}",rsEventDto.getId()))
+            .andExpect(status().isOk());
+
+  }
+
+  @Test
   public void shouldBuySuccess() throws Exception {
     UserDto save = userRepository.save(userDto);
     RsEventDto rsEventDto =
@@ -206,12 +224,54 @@ class RsControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
 
-    /*UserDto userDto = userRepository.findById(save.getId()).get();
-    RsEventDto newRsEvent = rsEventRepository.findById(rsEventDto.getId()).get();
-    assertEquals(userDto.getVoteNum(), 9);
-    assertEquals(newRsEvent.getVoteNum(), 1);
-    List<VoteDto> voteDtos =  voteRepository.findAll();
-    assertEquals(voteDtos.size(), 1);
-    assertEquals(voteDtos.get(0).getNum(), 1);*/
+    RsEventDto newRsEvent = rsEventRepository.findByRank(rsEventDto.getRank()).get();
+    assertEquals(newRsEvent.getPrice(), 150);
+    assertEquals(newRsEvent.getEventName(), "猪肉涨价了");
+    assertEquals(newRsEvent.getKeyword(), "经济");
+    TradeDto newTrad= tradeRepository.findByRank(rsEventDto.getRank()).get(0);
+    assertEquals(newTrad .getAmount(), 150);
+    assertEquals(newTrad .getRank(), 2);
+    assertEquals(newTrad.getRsEvent().getId(),rsEventDto.getId());
+ }
+  @Test
+  public void shouldBuyFail() throws Exception {
+    UserDto save = userRepository.save(userDto);
+    RsEventDto rsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).price(100).rank(2).build();
+    rsEventDto = rsEventRepository.save(rsEventDto);
+    RsEventDto newrsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).price(50).rank(5).build();
+    newrsEventDto = rsEventRepository.save(newrsEventDto);
+
+    String jsonValue =
+            String.format(
+                    "{\"rank\":2,\"amount\":50,\"eventName\":\"猪肉涨价了\",\"keyword\":\"经济\",\"delete\":\"Yes\"}");
+    mockMvc
+            .perform(
+                    post("/rs/buy/{id}", rsEventDto.getRank())
+                            .content(jsonValue)
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void shouldBuyFailtest() throws Exception {
+    UserDto save = userRepository.save(userDto);
+    RsEventDto rsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).price(100).rank(2).build();
+    rsEventDto = rsEventRepository.save(rsEventDto);
+    RsEventDto newrsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).price(50).rank(5).build();
+    newrsEventDto = rsEventRepository.save(newrsEventDto);
+
+    String jsonValue =
+            String.format(
+                    "{\"rank\":2,\"amount\":150,\"eventName\":null,\"keyword\":null,\"delete\":\"Yes\"}");
+    mockMvc
+            .perform(
+                    post("/rs/buy/{id}", rsEventDto.getRank())
+                            .content(jsonValue)
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
   }
 }
