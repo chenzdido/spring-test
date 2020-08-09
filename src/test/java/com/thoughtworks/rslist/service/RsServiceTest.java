@@ -1,7 +1,9 @@
 package com.thoughtworks.rslist.service;
 
+import com.thoughtworks.rslist.domain.Trade;
 import com.thoughtworks.rslist.domain.Vote;
 import com.thoughtworks.rslist.dto.RsEventDto;
+import com.thoughtworks.rslist.dto.TradeDto;
 import com.thoughtworks.rslist.dto.UserDto;
 import com.thoughtworks.rslist.dto.VoteDto;
 import com.thoughtworks.rslist.repository.RsEventRepository;
@@ -15,6 +17,7 @@ import org.mockito.Mock;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
@@ -77,6 +80,78 @@ class RsServiceTest {
                 .build());
     verify(userRepository).save(userDto);
     verify(rsEventRepository).save(rsEventDto);
+  }
+
+
+  @Test
+  public void shouldBuySuccess(){
+    //given
+    Trade trade=Trade.builder()
+            .amount(150)
+            .keyword("经济")
+            .eventName("猪肉涨价了")
+            .delete("No")
+            .build();
+    UserDto userDto =
+            UserDto.builder()
+                    .voteNum(5)
+                    .phone("18888888888")
+                    .gender("female")
+                    .email("a@b.com")
+                    .age(19)
+                    .userName("chenz")
+                    .build();
+    RsEventDto rsEventDto=RsEventDto.builder()
+            .user(userDto)
+            .eventName("eventName")
+            .keyword("KeyWord")
+            .voteNum(1)
+            .rank(4)
+            .price(100)
+            .build();
+    when(rsEventRepository.findByRank(anyInt())).thenReturn(Optional.of(rsEventDto));
+    //when
+    rsService.buy(trade,2);
+    //then
+    verify(tradeRepository).save(TradeDto.builder()
+            .amount(150)
+            .rank(4)
+            .rsEvent(rsEventDto)
+            .build());
+    verify(rsEventRepository).save(rsEventDto);
+    assertEquals(rsEventDto.getPrice(),150);
+  }
+
+  @Test
+  public void shouldBuyThrowVoteNotValidException(){
+    //given
+    Trade trade=Trade.builder()
+            .amount(50)
+            .keyword("经济")
+            .eventName("猪肉涨价了")
+            .delete("No")
+            .build();
+    UserDto userDto =
+            UserDto.builder()
+                    .voteNum(5)
+                    .phone("18888888888")
+                    .gender("female")
+                    .email("a@b.com")
+                    .age(19)
+                    .userName("chenz")
+                    .build();
+    RsEventDto rsEventDto=RsEventDto.builder()
+            .user(userDto)
+            .eventName("eventName")
+            .keyword("KeyWord")
+            .voteNum(1)
+            .rank(4)
+            .price(100)
+            .build();
+    when(rsEventRepository.findByRank(anyInt())).thenReturn(Optional.of(rsEventDto));
+    //when&then
+    assertThrows(RuntimeException.class,()->
+            rsService.buy(trade,4));
   }
 
   @Test

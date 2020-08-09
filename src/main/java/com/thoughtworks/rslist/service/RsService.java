@@ -54,24 +54,25 @@ public class RsService {
   }
 
   public void buy(Trade trade, int id) {
-    RsEventDto rsEvent=rsEventRepository.findByRank(id).get();
-    int rsEventId=rsEvent.getId();
-    TradeDto tradeDto=TradeDto.builder().amount(trade.getAmount()).rank(id).rsEvent(rsEvent).build();
+    RsEventDto rsEventdto=rsEventRepository.findByRank(id).get();
+    int rsEventId=rsEventdto.getId();
+    String delete=trade.getDelete();
+    TradeDto tradeDto=TradeDto.builder().amount(trade.getAmount()).rank(id).rsEvent(rsEventdto).build();
     tradeRepository.save(tradeDto);
-    if(rsEvent.getPrice()>trade.getAmount()){
-      throw new RuntimeException("400");
+    if(rsEventdto.getPrice()>trade.getAmount()){
+      throw new RuntimeException();
     }
-    if(trade.getDelete()=="Yes"){
+    if(delete=="Yes"){
       rsEventRepository.deleteById(rsEventId);
     }else{
       if(trade.getEventName()!=null){
-        rsEvent.setEventName(trade.getEventName());
+        rsEventdto.setEventName(trade.getEventName());
       }
       if(trade.getKeyword()!=null){
-        rsEvent.setKeyword(trade.getKeyword());
+        rsEventdto.setKeyword(trade.getKeyword());
       }
-      rsEvent.setPrice(trade.getAmount());
-      rsEventRepository.save(rsEvent);
+      rsEventdto.setPrice(trade.getAmount());
+      rsEventRepository.save(rsEventdto);
     }
   }
 }
