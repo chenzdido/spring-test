@@ -185,4 +185,33 @@ class RsControllerTest {
     assertEquals(voteDtos.size(), 1);
     assertEquals(voteDtos.get(0).getNum(), 1);
   }
+
+  @Test
+  public void shouldBuySuccess() throws Exception {
+    UserDto save = userRepository.save(userDto);
+    RsEventDto rsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).price(100).rank(2).build();
+    rsEventDto = rsEventRepository.save(rsEventDto);
+    RsEventDto newrsEventDto =
+            RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).price(50).rank(5).build();
+    newrsEventDto = rsEventRepository.save(newrsEventDto);
+
+    String jsonValue =
+            String.format(
+                    "{\"rank\":2,\"amount\":150,\"eventName\":\"猪肉涨价了\",\"keyword\":\"经济\",\"delete\":false}");
+    mockMvc
+            .perform(
+                    post("/rs/buy/{id}", rsEventDto.getRank())
+                            .content(jsonValue)
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+
+    /*UserDto userDto = userRepository.findById(save.getId()).get();
+    RsEventDto newRsEvent = rsEventRepository.findById(rsEventDto.getId()).get();
+    assertEquals(userDto.getVoteNum(), 9);
+    assertEquals(newRsEvent.getVoteNum(), 1);
+    List<VoteDto> voteDtos =  voteRepository.findAll();
+    assertEquals(voteDtos.size(), 1);
+    assertEquals(voteDtos.get(0).getNum(), 1);*/
+  }
 }
