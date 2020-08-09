@@ -23,6 +23,6 @@ public class RsEventDto {
   private String keyword;
   private int voteNum;
   private int rank;
-  private double price;
+  private double price=0;
   @ManyToOne private UserDto user;
 }
